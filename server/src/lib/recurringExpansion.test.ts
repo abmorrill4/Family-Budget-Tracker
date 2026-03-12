@@ -72,3 +72,35 @@ describe("expandRule - YEARLY", () => {
     expect(results.map(r => r.date)).toEqual(["2026-03-15", "2027-03-15", "2028-03-15"]);
   });
 });
+
+describe("expandRule - YEARLY leap year clamp", () => {
+  it("clamps Feb 29 to Feb 28 in non-leap years", () => {
+    const rule = { ...base, frequency: "YEARLY" as const, anchorDays: [], startDate: "2024-02-29" };
+    const results = expandRule(rule, "2024-01-01", "2026-12-31");
+    expect(results.map(r => r.date)).toEqual(["2024-02-29", "2025-02-28", "2026-02-28"]);
+  });
+});
+
+describe("expandRule - WEEKLY guard", () => {
+  it("returns empty array for out-of-range day of week", () => {
+    const rule = { ...base, frequency: "WEEKLY" as const, anchorDays: [7], startDate: "2026-01-01" };
+    const results = expandRule(rule, "2026-01-01", "2026-01-31");
+    expect(results).toEqual([]);
+  });
+});
+
+describe("expandRule - MONTHLY anchor day clamping", () => {
+  it("clamps day 31 to last day of short months", () => {
+    const rule = { ...base, frequency: "MONTHLY" as const, anchorDays: [31], startDate: "2026-01-01" };
+    const results = expandRule(rule, "2026-01-01", "2026-04-30");
+    expect(results.map(r => r.date)).toEqual(["2026-01-31", "2026-02-28", "2026-03-31", "2026-04-30"]);
+  });
+});
+
+describe("expandRule - inactive rule", () => {
+  it("returns empty array when active is false", () => {
+    const rule = { ...base, frequency: "MONTHLY" as const, anchorDays: [1], startDate: "2026-01-01", active: false };
+    const results = expandRule(rule, "2026-01-01", "2026-12-31");
+    expect(results).toEqual([]);
+  });
+});

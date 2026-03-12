@@ -32,7 +32,7 @@ function clamp(day: number, daysInMonth: number): number {
 }
 
 function daysInMonth(year: number, month: number): number {
-  return new Date(year, month, 0).getDate();
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
 export function expandRule(
@@ -51,8 +51,11 @@ export function expandRule(
   const effectiveStart = sDate > rStart ? sDate : rStart;
   const effectiveEnd = eDate && eDate < rEnd ? eDate : rEnd;
 
+  const effectiveStartStr = toYMD(effectiveStart);
+  const effectiveEndStr = toYMD(effectiveEnd);
+
   function emit(dateStr: string) {
-    if (dateStr >= toYMD(effectiveStart) && dateStr <= toYMD(effectiveEnd)) {
+    if (dateStr >= effectiveStartStr && dateStr <= effectiveEndStr) {
       results.push({
         date: dateStr,
         amount: rule.amount,
@@ -75,7 +78,8 @@ export function expandRule(
       const mEnd = y === endYear ? endMonth : 12;
       for (let m = mStart; m <= mEnd; m++) {
         const dim = daysInMonth(y, m);
-        for (const day of rule.anchorDays) {
+        const sortedDays = [...rule.anchorDays].sort((a, b) => a - b);
+        for (const day of sortedDays) {
           const d = clamp(day, dim);
           emit(`${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
         }
@@ -85,9 +89,23 @@ export function expandRule(
     const startYear = sDate.getUTCFullYear();
     const startMonth = sDate.getUTCMonth() + 1;
     const day = rule.anchorDays[0] ?? 1;
+    const effectiveStartStr = toYMD(effectiveStart);
 
     let y = startYear;
     let m = startMonth;
+
+    // Fast-forward to first quarterly occurrence >= effectiveStart
+    while (true) {
+      const dim = daysInMonth(y, m);
+      const d = clamp(day, dim);
+      const dateStr = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      if (dateStr >= effectiveStartStr) break;
+      m += 3;
+      if (m > 12) { m -= 12; y++; }
+      // Safety guard for degenerate input
+      if (y > 9999) break;
+    }
+
     while (true) {
       const dim = daysInMonth(y, m);
       const d = clamp(day, dim);
@@ -99,6 +117,7 @@ export function expandRule(
     }
   } else if (rule.frequency === "WEEKLY") {
     const targetDow = rule.anchorDays[0] ?? 0;
+    if (targetDow < 0 || targetDow > 6) return results;
     const cur = new Date(effectiveStart);
     while (cur.getUTCDay() !== targetDow) cur.setUTCDate(cur.getUTCDate() + 1);
     while (cur <= effectiveEnd) {
@@ -118,7 +137,8 @@ export function expandRule(
     const startYear = rStart.getUTCFullYear();
     const endYear = rEnd.getUTCFullYear();
     for (let y = startYear; y <= endYear; y++) {
-      emit(`${y}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`);
+      const d = clamp(day, daysInMonth(y, month));
+      emit(`${y}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
     }
   }
 
