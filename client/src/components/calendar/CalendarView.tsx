@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +20,7 @@ import { TransactionForm } from "@/components/ledger/TransactionForm";
 import { fetchCalendar, fetchTransactionsByDate } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import { buildCalendarGrid, formatCurrency, cn } from "@/lib/utils";
-import type { DayMetrics, Transaction } from "@/types";
+import type { DayMetrics, ProjectedOccurrence, Transaction } from "@/types";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
 const MONTH_NAMES = [
@@ -107,11 +108,13 @@ function DayCell({
   metrics,
   isToday,
   onClick,
+  projectedItems,
 }: {
   day: number;
   metrics: DayMetrics | undefined;
   isToday: boolean;
   onClick: () => void;
+  projectedItems: ProjectedOccurrence[];
 }) {
   const hasNegativeEnding = metrics && metrics.ending < 0;
 
@@ -161,6 +164,15 @@ function DayCell({
           </div>
         </div>
       )}
+      {projectedItems.map((p) => (
+        <div
+          key={p.ruleId}
+          className="text-xs text-muted-foreground border border-dashed rounded px-1 mt-1 truncate"
+          title={`${p.ruleName}: ${p.amount < 0 ? "-" : "+"}$${Math.abs(p.amount).toFixed(2)}`}
+        >
+          {p.ruleName}: {p.amount < 0 ? "-" : "+"}${Math.abs(p.amount).toFixed(0)}
+        </div>
+      ))}
     </div>
   );
 }
@@ -273,6 +285,8 @@ export function CalendarView() {
   const { calendarYear, calendarMonth, selectedDay, setSelectedDay } =
     useAppStore();
 
+  const [showProjected, setShowProjected] = useState(true);
+
   const { data, isLoading } = useQuery({
     queryKey: ["calendar", calendarYear, calendarMonth],
     queryFn: () => fetchCalendar(calendarYear, calendarMonth),
@@ -301,6 +315,15 @@ export function CalendarView() {
   return (
     <div>
       <MonthNavigator />
+      <div className="mb-4">
+        <Button
+          variant={showProjected ? "secondary" : "ghost"}
+          size="sm"
+          onClick={() => setShowProjected((v) => !v)}
+        >
+          {showProjected ? "Hide Projections" : "Show Projections"}
+        </Button>
+      </div>
 
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">
@@ -327,6 +350,10 @@ export function CalendarView() {
                 if (day === null) {
                   return <div key={`${wi}-${di}`} className="min-h-[100px]" />;
                 }
+                const dateStr = `${calendarYear}-${String(calendarMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                const projectedItems = showProjected
+                  ? (data?.projected ?? []).filter((p) => p.date === dateStr)
+                  : [];
                 return (
                   <DayCell
                     key={day}
@@ -334,6 +361,7 @@ export function CalendarView() {
                     metrics={metricsMap.get(day)}
                     isToday={isCurrentMonth && day === todayDate}
                     onClick={() => handleDayClick(day)}
+                    projectedItems={projectedItems}
                   />
                 );
               })
