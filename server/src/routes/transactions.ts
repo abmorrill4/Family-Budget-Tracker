@@ -6,6 +6,7 @@ import { serializeTransaction } from "../lib/serialize";
 import { AppError } from "../middleware/errorHandler";
 import { Prisma } from "@prisma/client";
 import { expandRules, RuleInput } from "../lib/recurringExpansion";
+import { findMatches } from "../lib/autoMatch";
 
 const router = Router();
 
@@ -142,6 +143,49 @@ router.get("/calendar", async (req: Request, res: Response, next: NextFunction) 
     const monthProjected = projected.filter((p) => p.date.startsWith(monthStr));
 
     res.json({ year, month, days, projected: monthProjected });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/transactions/unmatched — auto-match suggestions
+router.get("/unmatched", async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const [transactions, rules, existingMatches] = await Promise.all([
+      prisma.transaction.findMany({
+        where: { reconciled: false },
+        orderBy: { date: "desc" },
+        take: 200,
+        select: { id: true, date: true, name: true, amount: true, reconciled: true },
+      }),
+      prisma.recurringRule.findMany({ where: { active: true } }),
+      prisma.recurringRuleMatch.findMany({ select: { transactionId: true } }),
+    ]);
+
+    const alreadyMatched = new Set(existingMatches.map((m) => m.transactionId));
+
+    const ruleInputs: RuleInput[] = rules.map((r) => ({
+      id: r.id,
+      name: r.name,
+      amount: r.amount.toNumber(),
+      type: r.type,
+      frequency: r.frequency as RuleInput["frequency"],
+      anchorDays: r.anchorDays,
+      startDate: r.startDate.toISOString().slice(0, 10),
+      endDate: r.endDate ? r.endDate.toISOString().slice(0, 10) : null,
+      active: r.active,
+    }));
+
+    const txnInputs = transactions.map((t) => ({
+      id: t.id,
+      date: t.date.toISOString().slice(0, 10),
+      name: t.name,
+      amount: t.amount.toNumber(),
+      reconciled: t.reconciled,
+    }));
+
+    const candidates = findMatches(txnInputs, ruleInputs, alreadyMatched);
+    res.json({ data: candidates });
   } catch (err) {
     next(err);
   }
