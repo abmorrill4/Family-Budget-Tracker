@@ -48,7 +48,7 @@ export interface CalendarResponse {
   year: number;
   month: number;
   days: DayMetrics[];
-  projected: ProjectedOccurrence[];
+  projected?: ProjectedOccurrence[];
 }
 
 export interface TransactionFilters {
@@ -89,7 +89,7 @@ export interface ProjectedOccurrence {
   projected: true;
   ruleId: string;
   ruleName: string;
-  type: string;
+  type: TransactionType;
 }
 
 export interface MatchCandidate {
