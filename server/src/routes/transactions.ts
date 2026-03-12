@@ -5,6 +5,7 @@ import { computeMonthMetrics } from "../lib/calculations";
 import { serializeTransaction } from "../lib/serialize";
 import { AppError } from "../middleware/errorHandler";
 import { Prisma } from "@prisma/client";
+import { expandRules, RuleInput } from "../lib/recurringExpansion";
 
 const router = Router();
 
@@ -99,24 +100,48 @@ router.get("/calendar", async (req: Request, res: Response, next: NextFunction) 
     }
 
     const lastDay = new Date(year, month, 0);
+    const rangeStart = "1970-01-01";
+    const rangeEnd = `${year}-${String(month).padStart(2, "0")}-${String(lastDay.getDate()).padStart(2, "0")}`;
 
-    // Fetch ALL transactions from beginning of time through end of requested month
+    // Fetch real transactions (all history through end of requested month)
     const transactions = await prisma.transaction.findMany({
-      where: {
-        date: { lte: lastDay },
-      },
+      where: { date: { lte: lastDay } },
       orderBy: { date: "asc" },
       select: { date: true, amount: true },
     });
 
-    const txnInputs = transactions.map((t) => ({
-      date: t.date.toISOString().slice(0, 10),
-      amount: t.amount.toNumber(),
+    // Fetch active recurring rules and expand into projected occurrences
+    const rules = await prisma.recurringRule.findMany({ where: { active: true } });
+    const ruleInputs: RuleInput[] = rules.map((r) => ({
+      id: r.id,
+      name: r.name,
+      amount: r.amount.toNumber(),
+      type: r.type,
+      frequency: r.frequency as RuleInput["frequency"],
+      anchorDays: r.anchorDays,
+      startDate: r.startDate.toISOString().slice(0, 10),
+      endDate: r.endDate ? r.endDate.toISOString().slice(0, 10) : null,
+      active: r.active,
     }));
+
+    const projected = expandRules(ruleInputs, rangeStart, rangeEnd);
+
+    // Merge real + projected for metric computation
+    const txnInputs = [
+      ...transactions.map((t) => ({
+        date: t.date.toISOString().slice(0, 10),
+        amount: t.amount.toNumber(),
+      })),
+      ...projected.map((p) => ({ date: p.date, amount: p.amount })),
+    ];
 
     const days = computeMonthMetrics(year, month, txnInputs);
 
-    res.json({ year, month, days });
+    // Return projected occurrences for just the requested month so the UI can render them distinctly
+    const monthStr = `${year}-${String(month).padStart(2, "0")}`;
+    const monthProjected = projected.filter((p) => p.date.startsWith(monthStr));
+
+    res.json({ year, month, days, projected: monthProjected });
   } catch (err) {
     next(err);
   }
