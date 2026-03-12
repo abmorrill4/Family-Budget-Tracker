@@ -125,6 +125,7 @@ export default function RecurringPage() {
       </div>
 
       <RecurringRuleForm
+        key={editing?.id ?? "new"}
         open={formOpen}
         onClose={() => { setFormOpen(false); setEditing(null); }}
         editing={editing}
