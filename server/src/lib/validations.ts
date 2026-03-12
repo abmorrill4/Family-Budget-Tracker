@@ -44,7 +44,27 @@ export const updateBudgetItemSchema = z.object({
   notes: z.string().max(1000).nullable().optional(),
 });
 
+const recurringFrequencyEnum = z.enum([
+  "WEEKLY", "BIWEEKLY", "SEMIMONTHLY", "MONTHLY", "QUARTERLY", "YEARLY",
+]);
+
+export const createRecurringRuleSchema = z.object({
+  name: z.string().min(1).max(255),
+  amount: z.number().refine((v) => v !== 0, "Amount must be non-zero"),
+  type: transactionTypeEnum,
+  frequency: recurringFrequencyEnum,
+  anchorDays: z.array(z.number().int().min(0).max(31)).default([]),
+  startDate: z.string().regex(dateRegex, "Date must be YYYY-MM-DD format"),
+  endDate: z.string().regex(dateRegex).nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
+  active: z.boolean().optional().default(true),
+});
+
+export const updateRecurringRuleSchema = createRecurringRuleSchema.partial();
+
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 export type CreateBudgetItemInput = z.infer<typeof createBudgetItemSchema>;
 export type UpdateBudgetItemInput = z.infer<typeof updateBudgetItemSchema>;
+export type CreateRecurringRuleInput = z.infer<typeof createRecurringRuleSchema>;
+export type UpdateRecurringRuleInput = z.infer<typeof updateRecurringRuleSchema>;

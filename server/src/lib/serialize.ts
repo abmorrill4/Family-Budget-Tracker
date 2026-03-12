@@ -49,3 +49,35 @@ export function serializeBudgetItem(b: PrismaBudgetItem) {
     updatedAt: b.updatedAt.toISOString(),
   };
 }
+
+interface PrismaRecurringRule {
+  id: string;
+  name: string;
+  amount: Decimal;
+  type: string;
+  frequency: string;
+  anchorDays: number[];
+  startDate: Date;
+  endDate: Date | null;
+  notes: string | null;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export function serializeRecurringRule(r: PrismaRecurringRule) {
+  return {
+    id: r.id,
+    name: r.name,
+    amount: r.amount.toNumber(),
+    type: r.type,
+    frequency: r.frequency,
+    anchorDays: r.anchorDays,
+    startDate: r.startDate.toISOString().slice(0, 10),
+    endDate: r.endDate ? r.endDate.toISOString().slice(0, 10) : null,
+    notes: r.notes,
+    active: r.active,
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+  };
+}
