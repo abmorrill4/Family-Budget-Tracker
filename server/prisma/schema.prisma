@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  INCOME
+  BILL
+  DEBT
+  SPENDING
+  SUBSCRIPTION
+}
+
+model Transaction {
+  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date       DateTime        @db.Date
+  type       TransactionType
+  name       String          @db.VarChar(255)
+  amount     Decimal         @db.Decimal(12, 2)
+  reconciled Boolean         @default(false)
+  notes      String?         @db.Text
+  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([date])
+  @@map("transactions")
+}
+
+model BudgetItem {
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date      DateTime        @db.Date
+  type      TransactionType
+  name      String          @db.VarChar(255)
+  amount    Decimal         @db.Decimal(12, 2)
+  notes     String?         @db.Text
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([date])
+  @@map("budget_items")
+}
