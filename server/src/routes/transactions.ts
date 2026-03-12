@@ -100,7 +100,7 @@ router.get("/calendar", async (req: Request, res: Response, next: NextFunction) 
     }
 
     const lastDay = new Date(year, month, 0);
-    const rangeStart = "1970-01-01";
+    const rangeStart = `${year}-${String(month).padStart(2, "0")}-01`;
     const rangeEnd = `${year}-${String(month).padStart(2, "0")}-${String(lastDay.getDate()).padStart(2, "0")}`;
 
     // Fetch real transactions (all history through end of requested month)
