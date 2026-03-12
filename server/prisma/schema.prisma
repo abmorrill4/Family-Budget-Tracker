@@ -60,9 +60,9 @@ model RecurringRule {
   amount      Decimal            @db.Decimal(12, 2)
   type        TransactionType
   frequency   RecurringFrequency
-  anchorDays  Int[]
-  startDate   DateTime           @db.Date
-  endDate     DateTime?          @db.Date
+  anchorDays  Int[]              @map("anchor_days")
+  startDate   DateTime           @db.Date @map("start_date")
+  endDate     DateTime?          @db.Date @map("end_date")
   notes       String?            @db.Text
   active      Boolean            @default(true)
   createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz()
@@ -74,14 +74,15 @@ model RecurringRule {
 
 model RecurringRuleMatch {
   id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ruleId         String        @db.Uuid
-  transactionId  String        @db.Uuid
-  projectedDate  DateTime      @db.Date
+  ruleId         String        @db.Uuid @map("rule_id")
+  transactionId  String        @db.Uuid @map("transaction_id")
+  projectedDate  DateTime      @db.Date @map("projected_date")
   createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz()
 
   rule        RecurringRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
-  transaction Transaction   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transaction Transaction   @relation(fields: [transactionId], references: [id], onDelete: Restrict)
 
   @@unique([ruleId, projectedDate])
+  @@index([transactionId])
   @@map("recurring_rule_matches")
 }
