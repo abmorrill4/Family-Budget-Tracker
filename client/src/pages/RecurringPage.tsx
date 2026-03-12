@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -92,11 +92,13 @@ export default function RecurringPage() {
                   </span>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={() => toggleMutation.mutate({ id: rule.id, active: !rule.active })}
+                    disabled={toggleMutation.isPending}
                     title={rule.active ? "Pause" : "Resume"}
+                    aria-label={rule.active ? "Pause rule" : "Resume rule"}
                   >
-                    {rule.active ? "⏸" : "▶"}
+                    {rule.active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   </Button>
                   <Button variant="ghost" size="icon" onClick={() => { setEditing(rule); setFormOpen(true); }}>
                     <Pencil className="h-4 w-4" />
