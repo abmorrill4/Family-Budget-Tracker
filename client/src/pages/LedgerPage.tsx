@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TransactionTable } from "@/components/ledger/TransactionTable";
 import { TransactionForm } from "@/components/ledger/TransactionForm";
+import MatchSuggestions from "@/components/ledger/MatchSuggestions";
 import { useAppStore } from "@/lib/store";
 import { Plus } from "lucide-react";
 
@@ -10,6 +11,8 @@ export default function LedgerPage() {
 
   return (
     <div className="space-y-6">
+      <MatchSuggestions />
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Ledger</h1>
         <Button onClick={() => openForm()}>
