@@ -6,6 +6,7 @@ import cors from "cors";
 import path from "path";
 import transactionRoutes from "./routes/transactions";
 import budgetItemRoutes from "./routes/budgetItems";
+import recurringRuleRoutes from "./routes/recurringRules";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.json());
 // API routes
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/budget-items", budgetItemRoutes);
+app.use("/api/recurring-rules", recurringRuleRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === "production") {
