@@ -8,7 +8,14 @@ import { fetchUnmatched, confirmMatch } from "@/lib/api";
 
 export default function MatchSuggestions() {
   const qc = useQueryClient();
-  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+  const [dismissed, setDismissed] = useState<Set<string>>(() => {
+    try {
+      const stored = sessionStorage.getItem("dismissed-matches");
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
 
   const { data } = useQuery({
     queryKey: ["unmatched"],
@@ -41,7 +48,7 @@ export default function MatchSuggestions() {
   if (candidates.length === 0) return null;
 
   return (
-    <Card className="border-yellow-300 bg-yellow-50 dark:bg-yellow-950/20">
+    <Card role="status" className="border-yellow-300 bg-yellow-50 dark:bg-yellow-950/20">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium">
           {candidates.length} suggested match{candidates.length !== 1 ? "es" : ""} to reconcile
@@ -84,8 +91,13 @@ export default function MatchSuggestions() {
                 size="sm"
                 variant="ghost"
                 className="h-7 text-muted-foreground"
+                aria-label="Dismiss suggestion"
                 onClick={() =>
-                  setDismissed((s) => new Set([...s, c.transaction.id]))
+                  setDismissed((s) => {
+                    const next = new Set([...s, c.transaction.id]);
+                    try { sessionStorage.setItem("dismissed-matches", JSON.stringify([...next])); } catch {}
+                    return next;
+                  })
                 }
               >
                 <XCircle className="h-3 w-3" />
