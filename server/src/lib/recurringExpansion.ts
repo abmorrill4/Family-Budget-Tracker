@@ -89,7 +89,6 @@ export function expandRule(
     const startYear = sDate.getUTCFullYear();
     const startMonth = sDate.getUTCMonth() + 1;
     const day = rule.anchorDays[0] ?? 1;
-    const effectiveStartStr = toYMD(effectiveStart);
 
     let y = startYear;
     let m = startMonth;

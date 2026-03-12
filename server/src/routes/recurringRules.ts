@@ -45,7 +45,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
 router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = createRecurringRuleSchema.parse(req.body);
-    const existing = await prisma.recurringRule.findUnique({ where: { id: req.params.id } });
+    const existing = await prisma.recurringRule.findUnique({ where: { id: req.params.id as string } });
     if (!existing) throw new AppError(404, "Recurring rule not found");
     const rule = await prisma.recurringRule.update({
       where: { id: req.params.id as string },
@@ -82,7 +82,7 @@ router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => 
     if (data.endDate !== undefined) updateData.endDate = data.endDate ? new Date(data.endDate) : null;
     if (data.notes !== undefined) updateData.notes = data.notes;
 
-    const existing = await prisma.recurringRule.findUnique({ where: { id: req.params.id } });
+    const existing = await prisma.recurringRule.findUnique({ where: { id: req.params.id as string } });
     if (!existing) throw new AppError(404, "Recurring rule not found");
     const rule = await prisma.recurringRule.update({
       where: { id: req.params.id as string },
