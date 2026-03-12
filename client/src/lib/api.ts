@@ -4,6 +4,8 @@ import type {
   PaginatedResponse,
   CalendarResponse,
   TransactionFilters,
+  RecurringRule,
+  MatchCandidate,
 } from "@/types";
 
 const API_BASE = "/api";
@@ -132,4 +134,57 @@ export function deleteBudgetItem(id: string): Promise<void> {
   return fetchJSON(`${API_BASE}/budget-items/${id}`, {
     method: "DELETE",
   });
+}
+
+// Recurring Rules
+export function fetchRecurringRules(): Promise<{ data: RecurringRule[] }> {
+  return fetchJSON(`${API_BASE}/recurring-rules`);
+}
+
+export function createRecurringRule(
+  data: Omit<RecurringRule, "id" | "createdAt" | "updatedAt">
+): Promise<RecurringRule> {
+  return fetchJSON(`${API_BASE}/recurring-rules`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateRecurringRule(
+  id: string,
+  data: Omit<RecurringRule, "id" | "createdAt" | "updatedAt">
+): Promise<RecurringRule> {
+  return fetchJSON(`${API_BASE}/recurring-rules/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function patchRecurringRule(
+  id: string,
+  data: Partial<RecurringRule>
+): Promise<RecurringRule> {
+  return fetchJSON(`${API_BASE}/recurring-rules/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteRecurringRule(id: string): Promise<void> {
+  return fetchJSON(`${API_BASE}/recurring-rules/${id}`, { method: "DELETE" });
+}
+
+export function confirmMatch(
+  ruleId: string,
+  transactionId: string,
+  projectedDate: string
+): Promise<{ ok: boolean }> {
+  return fetchJSON(`${API_BASE}/recurring-rules/${ruleId}/match`, {
+    method: "POST",
+    body: JSON.stringify({ transactionId, projectedDate }),
+  });
+}
+
+export function fetchUnmatched(): Promise<{ data: MatchCandidate[] }> {
+  return fetchJSON(`${API_BASE}/transactions/unmatched`);
 }

@@ -48,6 +48,7 @@ export interface CalendarResponse {
   year: number;
   month: number;
   days: DayMetrics[];
+  projected: ProjectedOccurrence[];
 }
 
 export interface TransactionFilters {
@@ -57,4 +58,43 @@ export interface TransactionFilters {
   start: string;
   end: string;
   page: number;
+}
+
+export type RecurringFrequency =
+  | "WEEKLY"
+  | "BIWEEKLY"
+  | "SEMIMONTHLY"
+  | "MONTHLY"
+  | "QUARTERLY"
+  | "YEARLY";
+
+export interface RecurringRule {
+  id: string;
+  name: string;
+  amount: number;
+  type: TransactionType;
+  frequency: RecurringFrequency;
+  anchorDays: number[];
+  startDate: string;
+  endDate: string | null;
+  notes: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectedOccurrence {
+  date: string;
+  amount: number;
+  projected: true;
+  ruleId: string;
+  ruleName: string;
+  type: string;
+}
+
+export interface MatchCandidate {
+  transaction: { id: string; date: string; name: string; amount: number };
+  rule: { id: string; name: string };
+  projectedDate: string;
+  confidence: number;
 }
