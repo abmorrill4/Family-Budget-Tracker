@@ -7,10 +7,11 @@ import {
   NavLink,
 } from "react-router-dom";
 import { Toaster } from "sonner";
-import { Calendar, BookOpen } from "lucide-react";
+import { Calendar, BookOpen, RefreshCw } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import CalendarPage from "@/pages/CalendarPage";
 import LedgerPage from "@/pages/LedgerPage";
+import RecurringPage from "@/pages/RecurringPage";
 import { cn } from "@/lib/utils";
 
 const queryClient = new QueryClient({
@@ -56,6 +57,18 @@ function Layout({ children }: { children: React.ReactNode }) {
             <BookOpen className="h-4 w-4" />
             Ledger
           </NavLink>
+          <NavLink
+            to="/recurring"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
+                isActive && "bg-accent text-accent-foreground"
+              )
+            }
+          >
+            <RefreshCw className="h-4 w-4" />
+            Recurring
+          </NavLink>
         </nav>
       </aside>
 
@@ -74,6 +87,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/calendar" replace />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/ledger" element={<LedgerPage />} />
+            <Route path="/recurring" element={<RecurringPage />} />
           </Routes>
         </Layout>
         <Toaster richColors position="bottom-right" />
