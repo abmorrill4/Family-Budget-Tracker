@@ -8,6 +8,8 @@ interface PrismaTransaction {
   amount: Decimal;
   reconciled?: boolean;
   notes: string | null;
+  source?: string;
+  ynabId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +34,8 @@ export function serializeTransaction(t: PrismaTransaction) {
     amount: t.amount.toNumber(),
     reconciled: t.reconciled ?? false,
     notes: t.notes,
+    source: t.source ?? "MANUAL",
+    ynabId: t.ynabId ?? null,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
   };

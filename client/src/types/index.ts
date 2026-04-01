@@ -1,4 +1,5 @@
 export type TransactionType = "INCOME" | "BILL" | "DEBT" | "SPENDING" | "SUBSCRIPTION";
+export type TransactionSource = "MANUAL" | "YNAB";
 
 export interface Transaction {
   id: string;
@@ -8,8 +9,48 @@ export interface Transaction {
   amount: number;
   reconciled: boolean;
   notes: string | null;
+  source: TransactionSource;
+  ynabId: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface YnabBudget {
+  id: string;
+  name: string;
+  last_modified_on: string;
+}
+
+export interface YnabAccount {
+  id: string;
+  name: string;
+  type: string;
+  on_budget: boolean;
+  balance: number;
+}
+
+export interface YnabConnection {
+  id: string;
+  budgetId: string;
+  budgetName: string;
+  accountIds: string[];
+  lastSyncedAt: string | null;
+  syncIntervalMinutes: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface YnabStatus {
+  connected: boolean;
+  connection?: YnabConnection;
+  transactionCount?: number;
+}
+
+export interface YnabSyncResult {
+  created: number;
+  updated: number;
+  deleted: number;
+  lastSyncedAt: string;
 }
 
 export interface BudgetItem {

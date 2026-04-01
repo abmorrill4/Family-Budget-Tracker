@@ -33,7 +33,7 @@ import { fetchTransactions, patchTransaction, deleteTransaction } from "@/lib/ap
 import { useAppStore } from "@/lib/store";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Transaction, TransactionType } from "@/types";
-import { Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 
 const TRANSACTION_TYPES: TransactionType[] = [
   "INCOME",
@@ -151,6 +151,7 @@ export function TransactionTable() {
             <TableHead>Name</TableHead>
             <TableHead className="text-right">Amount</TableHead>
             <TableHead className="text-center">Reconciled</TableHead>
+            <TableHead>Source</TableHead>
             <TableHead>Notes</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -158,65 +159,85 @@ export function TransactionTable() {
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                 Loading...
               </TableCell>
             </TableRow>
           ) : transactions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                 No transactions found
               </TableCell>
             </TableRow>
           ) : (
-            transactions.map((txn) => (
-              <TableRow key={txn.id}>
-                <TableCell>{formatDate(txn.date)}</TableCell>
-                <TableCell>
-                  <TypeBadge type={txn.type} />
-                </TableCell>
-                <TableCell className="font-medium">{txn.name}</TableCell>
-                <TableCell
-                  className={`text-right font-mono ${
-                    txn.amount >= 0 ? "text-emerald-600" : "text-red-600"
-                  }`}
-                >
-                  {formatCurrency(txn.amount)}
-                </TableCell>
-                <TableCell className="text-center">
-                  <Checkbox
-                    checked={txn.reconciled}
-                    onCheckedChange={(checked) =>
-                      reconcileMutation.mutate({
-                        id: txn.id,
-                        reconciled: checked === true,
-                      })
-                    }
-                  />
-                </TableCell>
-                <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                  {txn.notes}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openForm(txn)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDeleteTarget(txn)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
+            transactions.map((txn) => {
+              const isYnab = txn.source === "YNAB";
+              return (
+                <TableRow key={txn.id}>
+                  <TableCell>{formatDate(txn.date)}</TableCell>
+                  <TableCell>
+                    <TypeBadge type={txn.type} />
+                  </TableCell>
+                  <TableCell className="font-medium">{txn.name}</TableCell>
+                  <TableCell
+                    className={`text-right font-mono ${
+                      txn.amount >= 0 ? "text-emerald-600" : "text-red-600"
+                    }`}
+                  >
+                    {formatCurrency(txn.amount)}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Checkbox
+                      checked={txn.reconciled}
+                      disabled={isYnab}
+                      onCheckedChange={(checked) =>
+                        reconcileMutation.mutate({
+                          id: txn.id,
+                          reconciled: checked === true,
+                        })
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {isYnab ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-blue-600">
+                        <RefreshCw className="h-3 w-3" />
+                        YNAB
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Manual</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                    {txn.notes}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {isYnab ? (
+                      <span className="text-xs text-muted-foreground italic">
+                        Read-only
+                      </span>
+                    ) : (
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openForm(txn)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteTarget(txn)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })
           )}
         </TableBody>
       </Table>

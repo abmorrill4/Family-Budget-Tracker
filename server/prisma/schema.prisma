@@ -15,18 +15,26 @@ enum TransactionType {
   SUBSCRIPTION
 }
 
+enum TransactionSource {
+  MANUAL
+  YNAB
+}
+
 model Transaction {
-  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  date       DateTime        @db.Date
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date       DateTime          @db.Date
   type       TransactionType
-  name       String          @db.VarChar(255)
-  amount     Decimal         @db.Decimal(12, 2)
-  reconciled Boolean         @default(false)
-  notes      String?         @db.Text
-  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt  DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+  name       String            @db.VarChar(255)
+  amount     Decimal           @db.Decimal(12, 2)
+  reconciled Boolean           @default(false)
+  notes      String?           @db.Text
+  source     TransactionSource @default(MANUAL)
+  ynabId     String?           @unique @map("ynab_id") @db.VarChar(255)
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@index([date])
+  @@index([ynabId])
   @@map("transactions")
 }
 
@@ -42,4 +50,20 @@ model BudgetItem {
 
   @@index([date])
   @@map("budget_items")
+}
+
+model YnabConnection {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accessToken        String   @map("access_token") @db.Text
+  budgetId           String   @map("budget_id") @db.VarChar(255)
+  budgetName         String   @map("budget_name") @db.VarChar(255)
+  accountIds         String[] @map("account_ids")
+  lastSyncedAt       DateTime? @map("last_synced_at") @db.Timestamptz()
+  lastServerKnowledge Int?     @map("last_server_knowledge")
+  syncIntervalMinutes Int      @default(360) @map("sync_interval_minutes")
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("ynab_connections")
 }

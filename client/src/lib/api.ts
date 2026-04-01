@@ -4,6 +4,11 @@ import type {
   PaginatedResponse,
   CalendarResponse,
   TransactionFilters,
+  YnabBudget,
+  YnabAccount,
+  YnabStatus,
+  YnabSyncResult,
+  YnabConnection,
 } from "@/types";
 
 const API_BASE = "/api";
@@ -44,7 +49,7 @@ export function fetchTransaction(id: string): Promise<Transaction> {
 }
 
 export function createTransaction(
-  data: Omit<Transaction, "id" | "createdAt" | "updatedAt">
+  data: Omit<Transaction, "id" | "source" | "ynabId" | "createdAt" | "updatedAt">
 ): Promise<Transaction> {
   return fetchJSON(`${API_BASE}/transactions`, {
     method: "POST",
@@ -54,7 +59,7 @@ export function createTransaction(
 
 export function updateTransaction(
   id: string,
-  data: Omit<Transaction, "id" | "createdAt" | "updatedAt">
+  data: Omit<Transaction, "id" | "source" | "ynabId" | "createdAt" | "updatedAt">
 ): Promise<Transaction> {
   return fetchJSON(`${API_BASE}/transactions/${id}`, {
     method: "PUT",
@@ -130,6 +135,70 @@ export function updateBudgetItem(
 
 export function deleteBudgetItem(id: string): Promise<void> {
   return fetchJSON(`${API_BASE}/budget-items/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// YNAB Integration
+export function validateYnabToken(
+  token: string
+): Promise<{ valid: boolean }> {
+  return fetchJSON(`${API_BASE}/ynab/validate`, {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
+
+export function fetchYnabBudgets(
+  token: string
+): Promise<{ budgets: YnabBudget[] }> {
+  return fetchJSON(`${API_BASE}/ynab/budgets`, {
+    headers: { "x-ynab-token": token },
+  });
+}
+
+export function fetchYnabAccounts(
+  token: string,
+  budgetId: string
+): Promise<{ accounts: YnabAccount[] }> {
+  return fetchJSON(`${API_BASE}/ynab/budgets/${budgetId}/accounts`, {
+    headers: { "x-ynab-token": token },
+  });
+}
+
+export function connectYnab(data: {
+  token: string;
+  budgetId: string;
+  budgetName: string;
+  accountIds: string[];
+  syncIntervalMinutes: number;
+}): Promise<{ connection: YnabConnection; sync: YnabSyncResult }> {
+  return fetchJSON(`${API_BASE}/ynab/connect`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function syncYnab(): Promise<YnabSyncResult> {
+  return fetchJSON(`${API_BASE}/ynab/sync`, { method: "POST" });
+}
+
+export function fetchYnabStatus(): Promise<YnabStatus> {
+  return fetchJSON(`${API_BASE}/ynab/status`);
+}
+
+export function updateYnabSettings(data: {
+  syncIntervalMinutes?: number;
+  accountIds?: string[];
+}): Promise<{ connection: YnabConnection }> {
+  return fetchJSON(`${API_BASE}/ynab/settings`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function disconnectYnab(): Promise<void> {
+  return fetchJSON(`${API_BASE}/ynab/disconnect`, {
     method: "DELETE",
   });
 }

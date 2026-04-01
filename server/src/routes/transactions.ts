@@ -138,6 +138,14 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
 // PUT /api/transactions/:id — full update
 router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await prisma.transaction.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!existing) throw new AppError(404, "Transaction not found");
+    if (existing.source === "YNAB") {
+      throw new AppError(403, "YNAB transactions are read-only");
+    }
+
     const data = createTransactionSchema.parse(req.body);
     const transaction = await prisma.transaction.update({
       where: { id: req.params.id },
@@ -159,6 +167,14 @@ router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
 // PATCH /api/transactions/:id — partial update (reconcile toggle)
 router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await prisma.transaction.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!existing) throw new AppError(404, "Transaction not found");
+    if (existing.source === "YNAB") {
+      throw new AppError(403, "YNAB transactions are read-only");
+    }
+
     const data = updateTransactionSchema.parse(req.body);
     const updateData: Prisma.TransactionUpdateInput = {};
 
@@ -182,6 +198,14 @@ router.patch("/:id", async (req: Request, res: Response, next: NextFunction) => 
 // DELETE /api/transactions/:id
 router.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const existing = await prisma.transaction.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!existing) throw new AppError(404, "Transaction not found");
+    if (existing.source === "YNAB") {
+      throw new AppError(403, "YNAB transactions are read-only");
+    }
+
     await prisma.transaction.delete({
       where: { id: req.params.id },
     });
